@@ -34,9 +34,7 @@ public class EmailListServlet extends HttpServlet {
 
             // 3. Lưu user vào PostgreSQL qua JPA
             User user = new User(firstName, lastName, email);
-            UserDAO.insert(user);
             request.setAttribute("user", user);
-
             // 4. Chuẩn bị nội dung gửi mail (Tiêu đề và câu chữ mang tính thông báo cá nhân)
             String to = email;
             String from = "thanh17022006@gmail.com"; 
@@ -48,18 +46,25 @@ public class EmailListServlet extends HttpServlet {
                     "Trân trọng,\n" +
                     "Bộ phận hỗ trợ kỹ thuật";
             boolean isBodyHTML = false;
-
-            // 5. Gửi mail qua Brevo REST API
-            try {
-                MailUtilGmail.sendMail(to, from, subject, body, isBodyHTML);
-            } catch (Exception e) {
-                String errorMessage = "ERROR: Unable to send email. " +
-                        "Check Tomcat logs for details.<br>" +
-                        "ERROR MESSAGE: " + e.getMessage();
-                request.setAttribute("errorMessage", errorMessage);
-                this.log("Lỗi gửi mail: " + e.getMessage(), e);
-            }
-            url = "/thanks.jsp";
+            String message;
+            if (UserDAO.emailExists(user.getEmail())) {
+                message = "This email address already exists.<br>" +
+                        "Please enter another email address.";
+                url = "/index.jsp";
+                request.setAttribute("message", message);
+            } else {
+                try {
+                    UserDAO.insert(user);
+                    MailUtilGmail.sendMail(to, from, subject, body, isBodyHTML);
+                } catch (Exception e) {
+                    String errorMessage = "ERROR: Unable to send email. " +
+                            "Check Tomcat logs for details.<br>" +
+                            "ERROR MESSAGE: " + e.getMessage();
+                    request.setAttribute("errorMessage", errorMessage);
+                    this.log("Lỗi gửi mail: " + e.getMessage(), e);
+                }
+                url = "/thanks.jsp";
+            }          
         }
         
         getServletContext()
