@@ -1,7 +1,6 @@
 package murach.email.controller;
 
 import java.io.*;
-import jakarta.mail.MessagingException;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -18,62 +17,60 @@ public class EmailListServlet extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        // get current action
+        // 1. Lấy action hiện tại
         String action = request.getParameter("action");
         if (action == null) {
-            action = "join"; // default action
+            action = "join";
         }
 
-        // perform action and set URL to appropriate page
         String url = "/index.jsp";
         if (action.equals("join")) {
-            url = "/index.jsp"; // the "join" page
+            url = "/index.jsp";
         } else if (action.equals("add")) {
-            // get parameters from the request
+            // 2. Lấy dữ liệu từ form
             String firstName = request.getParameter("firstName");
             String lastName = request.getParameter("lastName");
             String email = request.getParameter("email");
 
-            // store data in User object
+            // 3. Lưu user vào PostgreSQL qua JPA
             User user = new User(firstName, lastName, email);
             UserDAO.insert(user);
             request.setAttribute("user", user);
 
-            // send email to user
+            // 4. Chuẩn bị nội dung gửi mail (Tiêu đề và câu chữ mang tính thông báo cá nhân)
             String to = email;
-            String from = "thanh17022006@gmail.com";
-            String subject = "Welcome to our email list";
-            String body = "Dear " + firstName + ",\n\n" +
-                    "Thanks for joining our email list. We'll make sure to send " +
-                    "you announcements about new products and promotions.\n" +
-                    "Have a great day and thanks again!\n\n" +
-                    "Kelly Slivkoff\n" +
-                    "Mike Murach & Associates";
+            String from = "thanh17022006@gmail.com"; 
+            String subject = "Xác nhận đăng ký thông tin tài khoản";
+            String body = "Chào " + firstName + ",\n\n" +
+                    "Hệ thống xác nhận bạn đã đăng ký thông tin thành công.\n" +
+                    "Thông tin tài khoản của bạn đã được lưu trữ trên cơ sở dữ liệu.\n\n" +
+                    "Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua thư này.\n\n" +
+                    "Trân trọng,\n" +
+                    "Bộ phận hỗ trợ kỹ thuật";
             boolean isBodyHTML = false;
 
+            // 5. Gửi mail qua Brevo REST API
             try {
                 MailUtilGmail.sendMail(to, from, subject, body, isBodyHTML);
-            } catch (MessagingException e) {
+            } catch (Exception e) {
                 String errorMessage = "ERROR: Unable to send email. " +
                         "Check Tomcat logs for details.<br>" +
-                        "NOTE: You may need to configure your system " +
-                        "as described in chapter 14.<br>" +
                         "ERROR MESSAGE: " + e.getMessage();
                 request.setAttribute("errorMessage", errorMessage);
-                this.log(
-                        "Unable to send email. \n" +
-                                "Here is the email you tried to send: \n" +
-                                "=====================================\n" +
-                                "TO: " + email + "\n" +
-                                "FROM: " + from + "\n" +
-                                "SUBJECT: " + subject + "\n" +
-                                "\n" +
-                                body + "\n\n");
+                this.log("Lỗi gửi mail: " + e.getMessage(), e);
             }
             url = "/thanks.jsp";
         }
+        
         getServletContext()
                 .getRequestDispatcher(url)
                 .forward(request, response);
+    }
+    
+    @Override
+    protected void doGet(HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
+        doPost(request, response);
     }
 }

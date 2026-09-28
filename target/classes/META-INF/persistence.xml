@@ -1,24 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<persistence version="2.1"
-    xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+<persistence version="3.0"
+    xmlns="https://jakarta.ee/xml/ns/persistence"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence
-        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+    xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence 
+        https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
 
-    <persistence-unit name="emailListPU"
-                      transaction-type="RESOURCE_LOCAL">
+    <persistence-unit name="emailListPU" transaction-type="RESOURCE_LOCAL">
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
 
         <properties>
+            <!-- 1. Driver PostgreSQL cho Jakarta EE -->
+            <property name="jakarta.persistence.jdbc.driver" 
+                      value="org.postgresql.Driver"/>
+
+            <!-- 2. URL kết nối Render -->
             <property name="jakarta.persistence.jdbc.url"
-                      value="jdbc:mysql://localhost:3306/murach"/>
-            <property name="jakarta.persistence.jdbc.driver"
-                      value="com.mysql.jdbc.Driver"/>
-            <property name="jakarta.persistence.jdbc.user" value="root"/>
-            <property name="jakarta.persistence.jdbc.password" value="123456"/>
-            <property name="jakarta.persistence.schema-generation.database.action"
-                      value="create"/>
+                      value="jdbc:postgresql://dpg-dasuje59fdbs73f66fj0-a.singapore-postgres.render.com:5432/murach_dzjv?sslmode=require"/>
+
+            <!-- 3. User & Password từ trang Render -->
+            <property name="jakarta.persistence.jdbc.user" 
+                      value="chithanh"/>
+            <property name="jakarta.persistence.jdbc.password" 
+                      value="WaChP9Qw4KofQVWdzpnsE4HnpFtADZHJ"/>
+
+            <!-- 4. Tự động tạo hoặc mở rộng bảng từ Entity -->
+            <property name="eclipselink.ddl-generation" 
+                      value="create-or-extend-tables"/>
+            <property name="eclipselink.ddl-generation.output-mode" 
+                      value="database"/>
+
+            <!-- 5. Hiển thị câu lệnh SQL ra console để debug -->
+            <property name="eclipselink.logging.level.sql" 
+                      value="FINE"/>
+            <property name="eclipselink.logging.parameters" 
+                      value="true"/>
         </properties>
     </persistence-unit>
 </persistence>

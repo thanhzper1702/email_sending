@@ -1,7 +1,5 @@
-murach\email\util\MailUtilYahoo.class
+murach\email\controller\EmailListServlet.class
 murach\email\dao\UserDAO.class
 murach\email\util\DBUtil.class
-murach\email\util\MailUtilLocal.class
-murach\email\controller\EmailListServlet.class
 murach\email\util\MailUtilGmail.class
 murach\email\model\User.class

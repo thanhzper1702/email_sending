@@ -1,47 +1,53 @@
 package murach.email.util;
 
-import java.util.Properties;
-import jakarta.mail.*;
-import jakarta.mail.internet.*;
+import sibApi.TransactionalEmailsApi;
+import sibModel.*;
+import sendinblue.ApiClient;
+import sendinblue.Configuration;
+import sendinblue.auth.ApiKeyAuth;
+import java.util.Collections;
 
 public class MailUtilGmail {
 
+    // Dán API Key Brevo của bạn vào đây
+    private static final String BREVO_API_KEY = "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";
+
     public static void sendMail(String to, String from,
-            String subject, String body, boolean bodyIsHTML)
-            throws MessagingException {
+            String subject, String body, boolean bodyIsHTML) {
 
-        // 1 - get a mail session
-        Properties props = new Properties();
-        props.put("mail.transport.protocol", "smtps");
-        props.put("mail.smtps.host", "smtp.gmail.com");
-        props.put("mail.smtps.port", "465");
-        props.put("mail.smtps.auth", "true");
-        props.put("mail.smtps.ssl.enable", "true");
-        props.put("mail.smtps.ssl.trust", "smtp.gmail.com");
-        props.put("mail.smtps.ssl.protocols", "TLSv1.2 TLSv1.3");
-        props.put("mail.smtps.quitwait", "false");
-        Session session = Session.getInstance(props);
-        session.setDebug(true);
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        ApiKeyAuth apiKey = (ApiKeyAuth) defaultClient.getAuthentication("api-key");
+        apiKey.setApiKey(BREVO_API_KEY);
 
-        // 2 - create a message
-        Message message = new MimeMessage(session);
-        message.setSubject(subject);
+        TransactionalEmailsApi apiInstance = new TransactionalEmailsApi();
+
+        // Người gửi: Bắt buộc là Gmail đã verify trên Brevo
+        SendSmtpEmailSender sender = new SendSmtpEmailSender();
+        sender.setEmail(from);
+        sender.setName("Chí Thành Web");
+
+        // Người nhận: Bất kỳ email nào
+        SendSmtpEmailTo recipient = new SendSmtpEmailTo();
+        recipient.setEmail(to);
+
+        SendSmtpEmail sendSmtpEmail = new SendSmtpEmail();
+        sendSmtpEmail.setSender(sender);
+        sendSmtpEmail.setTo(Collections.singletonList(recipient));
+        sendSmtpEmail.setSubject(subject);
+
         if (bodyIsHTML) {
-            message.setContent(body, "text/html; charset=UTF-8");
+            sendSmtpEmail.setHtmlContent(body);
         } else {
-            message.setText(body);
+            sendSmtpEmail.setTextContent(body);
         }
 
-        // 3 - address the message
-        Address fromAddress = new InternetAddress(from);
-        Address toAddress = new InternetAddress(to);
-        message.setFrom(fromAddress);
-        message.setRecipient(Message.RecipientType.TO, toAddress);
-
-        // 4 - send the message
-        Transport transport = session.getTransport();
-        transport.connect("smtp.gmail.com", 465, "thanh17022006@gmail.com", "uzzhoxxjfbhioalh");
-        transport.sendMessage(message, message.getAllRecipients());
-        transport.close();
+        try {
+            CreateSmtpEmail result = apiInstance.sendTransacEmail(sendSmtpEmail);
+            System.out.println("Gửi mail thành công! Message ID: " + result.getMessageId());
+        } catch (Exception e) {
+            System.err.println("Gửi mail thất bại: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi gửi mail: " + e.getMessage(), e);
+        }
     }
 }
